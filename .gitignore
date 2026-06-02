@@ -71,7 +71,16 @@ dmypy.json
 # OS
 .DS_Store
 
-# Project data and outputs (see CLAUDE.md)
-data/raw/
-data/processed/
-reports/
+# Project data and outputs (see CLAUDE.md).
+# Ignore contents but keep the directory placeholders tracked so the
+# repo layout survives a clone. The small committed sample (data/sample/)
+# is intentionally NOT ignored.
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+reports/*
+!reports/.gitkeep
+
+# Local env file for API keys (M4); never commit secrets.
+.env.local

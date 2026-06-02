@@ -1,0 +1,111 @@
+# Voice-of-Customer pipeline configuration.
+# Everything tunable lives here — no hardcoded paths, model names, or magic
+# numbers in code. Loaded into a typed object by src/voc/config.py.
+
+project:
+  name: voc-intelligence-pipeline
+  seed: 42
+
+paths:
+  raw_csv: data/raw/complaints.csv          # full CFPB download (gitignored)
+  sample_csv: data/sample/sample.csv        # small committed sample
+  processed_dir: data/processed
+  records_parquet: data/processed/records.parquet
+  embeddings_dir: data/processed/embeddings  # content-hash-keyed cache
+  vector_store_dir: data/processed/chroma
+  theme_assignments: data/processed/theme_assignments.parquet
+  theme_summary: data/processed/theme_summary.parquet
+  theme_prevalence: data/processed/theme_prevalence.parquet
+  llm_extractions: data/processed/llm_extractions.jsonl  # append-only checkpoint
+  feature_table: data/processed/features.parquet
+  reports_dir: reports
+
+# Column mapping makes the pipeline dataset-agnostic (SPEC §5.1).
+# Defaults match the CFPB Consumer Complaint Database schema.
+columns:
+  text_column: "Consumer complaint narrative"
+  date_column: "Date received"
+  category_column: "Product"
+  subcategory_column: "Sub-product"
+  outcome_column: "Consumer disputed?"      # primary predictive target candidate
+  timely_column: "Timely response?"         # alternative target (better populated)
+  id_column: "Complaint ID"
+  group_columns: ["Company", "State"]
+
+ingest:
+  min_tokens: 5                  # drop near-empty narratives
+  lowercase_for_clustering: true # keep original casing for LLM stage; normalize for clustering
+  dedup_exact: true
+  dedup_near: true
+  near_dup_threshold: 0.9        # Jaccard/minhash similarity above which we treat as dup
+  drop_null_outcome: false       # keep rows with null outcome (handled in M5)
+
+embed:
+  model_name: sentence-transformers/all-mpnet-base-v2
+  batch_size: 64
+  normalize: true
+  cache: true
+
+themes:
+  algorithm: bertopic            # bertopic | hdbscan_ctfidf
+  min_topic_size: 50
+  nr_topics: auto                # "auto" or an int
+  umap:
+    n_neighbors: 15
+    n_components: 5
+    min_dist: 0.0
+  hdbscan:
+    min_cluster_size: 50
+    min_samples: 10
+  n_representative_docs: 5
+  top_n_keywords: 10
+
+llm:
+  provider: anthropic            # key from env var ANTHROPIC_API_KEY
+  model: claude-haiku-4-5-20251001   # small/cheap model for high-volume extraction (revisit at M4)
+  api_key_env: ANTHROPIC_API_KEY
+  prompt_version: v3             # v1 zero-shot | v2 few-shot | v3 few-shot+rubric
+  max_tokens: 512
+  temperature: 0.0
+  # --- cost & safety controls (SPEC §5.4.1) ---
+  max_concurrency: 8
+  max_records: 3000              # bulk sample size (overridden by sampling calc at M6)
+  max_spend_usd: 2.0             # hard stop; first real run stays small (CLAUDE.md)
+  max_attempts: 5                # retries on 429/5xx
+  backoff_base_seconds: 1.0
+  backoff_max_seconds: 30.0
+  # measured at the real run; used for the pre-run estimate (USD per 1k tokens)
+  input_cost_per_1k: 0.001
+  output_cost_per_1k: 0.005
+  controlled_vocab:              # issue_category controlled vocabulary
+    - billing_dispute
+    - unauthorized_activity
+    - credit_reporting_error
+    - debt_collection_harassment
+    - loan_servicing
+    - account_access
+    - fees_and_charges
+    - customer_service
+    - other
+
+predict:
+  target: timely_response        # timely_response | consumer_disputed (see SPEC §5.5 note)
+  positive_class_is_bad: true    # the "negative outcome" we want to predict
+  test_split: time               # time-aware split (NOT random) — SPEC requirement
+  test_fraction: 0.25            # most-recent 25% of periods held out for test
+  model: lightgbm                # lightgbm | xgboost
+  baseline: logistic
+  threshold: 0.5
+
+stats:
+  confidence_level: 0.95
+  margin_of_error: 0.03          # target MoE for sample-size calc
+  proportion_ci_method: wilson   # wilson | bootstrap
+  bootstrap_iterations: 2000
+  fdr_alpha: 0.05                # Benjamini-Hochberg correction level
+  min_theme_count_for_test: 30   # don't test sparsely-populated themes
+
+report:
+  output_md: reports/voc_insight_report.md
+  output_html: null              # set a path to also emit HTML
+  top_n_themes: 10

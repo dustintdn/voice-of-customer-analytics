@@ -38,22 +38,28 @@ def _run_all(config: Config, dry_run: bool) -> None:
 
 
 def build_parser() -> argparse.ArgumentParser:
-    """Build the argparse CLI with one subcommand per pipeline stage."""
-    parser = argparse.ArgumentParser(prog="voc", description=__doc__)
-    parser.add_argument(
+    """Build the argparse CLI with one subcommand per pipeline stage.
+
+    ``--config`` and ``--dry-run`` are attached to each subcommand (via a shared
+    parent parser) so they may follow the subcommand, e.g.
+    ``voc run --config config/config.yaml --dry-run``.
+    """
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument(
         "--config",
         default="config/config.yaml",
         help="Path to the YAML config (default: config/config.yaml).",
     )
-    parser.add_argument(
+    common.add_argument(
         "--dry-run",
         action="store_true",
         help="Use a mock LLM (no network, no spend) for the extraction stage.",
     )
 
+    parser = argparse.ArgumentParser(prog="voc", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
     for name in ("ingest", "embed", "themes", "extract", "predict", "stats", "report", "run"):
-        sub.add_parser(name, help=f"Run the {name} stage.")
+        sub.add_parser(name, parents=[common], help=f"Run the {name} stage.")
     return parser
 
 

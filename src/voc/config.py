@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Literal
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ProjectConfig(BaseModel):
@@ -80,6 +80,9 @@ class HdbscanConfig(BaseModel):
 
 class EmbedConfig(BaseModel):
     """Module 2 — embedding parameters."""
+
+    # ``model_name`` would otherwise collide with pydantic's ``model_`` namespace.
+    model_config = ConfigDict(protected_namespaces=())
 
     model_name: str
     batch_size: int = 64

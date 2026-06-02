@@ -30,5 +30,6 @@ Standing instructions for working in this repository. The full build spec is in 
 - `make run` on the committed sample must complete end-to-end and produce the report.
 
 ## Git
-- Commit at each green milestone checkpoint with a clear message so milestones can be rolled back.
+- The user handles all commits manually. Do NOT run `git commit` unless explicitly told to commit a specific change.
+- At each green milestone checkpoint, leave the working tree clean and green (tests + ruff pass), report what changed, and stop — let the user commit.
 - Keep `data/raw/`, `data/processed/`, and live `reports/` outputs gitignored; commit only the small sample and the spec/docs.

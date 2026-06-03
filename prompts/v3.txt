@@ -1,0 +1,38 @@
+Extract structured fields from the consumer complaint narrative below.
+
+Return ONLY a single JSON object with these exact keys:
+- "sentiment_label": one of "negative", "neutral", "positive"
+- "sentiment_score": a number from -1.0 (very negative) to 1.0 (very positive)
+- "issue_category": one of [{{CATEGORIES}}]
+- "severity": one of "low", "medium", "high"
+- "is_actionable": true or false
+
+RUBRIC — apply consistently:
+- sentiment_label/score: Complaints are usually negative. Use score in [-1.0, -0.6] when the
+  consumer expresses anger, financial harm, or legal threats; [-0.6, -0.2] for clear
+  dissatisfaction without escalation; near 0 for purely factual reports; positive only if the
+  consumer expresses satisfaction.
+- issue_category: choose the SINGLE best-fitting category from the allowed list based on the
+  core problem (not the product). Use "other" only when none clearly applies.
+- severity: "high" if there is fraud, foreclosure/garnishment risk, loss of account access,
+  legal escalation, or large sums; "medium" for standard disputes/fees/servicing errors;
+  "low" for minor or informational issues.
+- is_actionable: true if the narrative names a specific, concrete problem an analyst could
+  investigate or route; false if it is vague, off-topic, or purely emotional with no specifics.
+
+EXAMPLE 1:
+"A debt collector keeps calling me five times a day about a debt I already paid off and refuses to validate it. I have contacted an attorney."
+{"sentiment_label": "negative", "sentiment_score": -0.9, "issue_category": "debt_collection_harassment", "severity": "high", "is_actionable": true}
+
+EXAMPLE 2:
+"My credit card company charged me a $39 annual fee they had promised to waive when I opened the card."
+{"sentiment_label": "negative", "sentiment_score": -0.5, "issue_category": "fees_and_charges", "severity": "medium", "is_actionable": true}
+
+EXAMPLE 3:
+"There is an account on my credit report that does not belong to me and the bureau will not remove it."
+{"sentiment_label": "negative", "sentiment_score": -0.7, "issue_category": "credit_reporting_error", "severity": "medium", "is_actionable": true}
+
+Now extract the fields for this record.
+
+RECORD:
+{{NARRATIVE}}

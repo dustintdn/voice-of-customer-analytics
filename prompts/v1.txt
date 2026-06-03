@@ -1,0 +1,11 @@
+Extract structured fields from the consumer complaint narrative below.
+
+Return ONLY a single JSON object with these exact keys:
+- "sentiment_label": one of "negative", "neutral", "positive"
+- "sentiment_score": a number from -1.0 (very negative) to 1.0 (very positive)
+- "issue_category": one of [{{CATEGORIES}}]
+- "severity": one of "low", "medium", "high"
+- "is_actionable": true or false (whether the narrative describes a concrete, specific issue an analyst could act on)
+
+RECORD:
+{{NARRATIVE}}

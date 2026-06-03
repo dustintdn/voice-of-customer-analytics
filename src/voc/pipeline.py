@@ -19,7 +19,7 @@ from collections.abc import Sequence
 from voc.config import Config, load_config
 from voc.embed import run_embed
 from voc.ingest import run_ingest
-from voc.llm_extract import run_extract
+from voc.llm_extract import run_evaluation, run_extract
 from voc.predict import run_predict
 from voc.report import run_report
 from voc.stats import run_stats
@@ -31,7 +31,7 @@ def _run_all(config: Config, dry_run: bool, full: bool) -> None:
     run_ingest(config, full=full)
     run_embed(config)
     run_themes(config)
-    run_extract(config, dry_run=dry_run)
+    run_extract(config, dry_run=dry_run, yes=True)
     run_predict(config)
     run_stats(config)
     run_report(config)
@@ -60,10 +60,16 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Ingest the full raw CSV instead of the committed sample.",
     )
+    common.add_argument(
+        "--yes",
+        action="store_true",
+        help="Skip the paid-run confirmation prompt for the extraction stage.",
+    )
 
     parser = argparse.ArgumentParser(prog="voc", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
-    for name in ("ingest", "embed", "themes", "extract", "predict", "stats", "report", "run"):
+    stages = ("ingest", "embed", "themes", "extract", "evaluate", "predict", "stats", "report", "run")
+    for name in stages:
         sub.add_parser(name, parents=[common], help=f"Run the {name} stage.")
     return parser
 
@@ -78,7 +84,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         "ingest": lambda: run_ingest(config, full=args.full),
         "embed": lambda: run_embed(config),
         "themes": lambda: run_themes(config),
-        "extract": lambda: run_extract(config, dry_run=args.dry_run),
+        "extract": lambda: run_extract(config, dry_run=args.dry_run, yes=args.yes),
+        "evaluate": lambda: run_evaluation(config, dry_run=args.dry_run),
         "predict": lambda: run_predict(config),
         "stats": lambda: run_stats(config),
         "report": lambda: run_report(config),

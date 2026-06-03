@@ -41,6 +41,28 @@ make test       # run the test suite (offline)
 The report lands at `reports/voc_insight_report.md`. To run on the real data,
 follow [`data/README.md`](data/README.md) to download the CFPB CSV first.
 
+## LLM extraction — run protocol (M4)
+
+The LLM stage is offline-testable and built to spend money safely:
+
+```bash
+# Offline (mock LLM, no network, no spend):
+voc extract --dry-run               # structured fields for the sample
+voc evaluate --dry-run              # compare prompt variants on the gold set
+
+# Real, paid run (needs ANTHROPIC_API_KEY; starts small per max_spend_usd):
+python scripts/make_gold_stub.py --n 80      # create a labeling stub; hand-label it
+voc evaluate                                  # pick the best prompt on the gold set
+voc extract --yes                             # run the winning prompt on the sample
+```
+
+Recommended order (per `docs/SPEC.md` §5.4.1): run the gold-set evaluation first
+(the only place you pay for multiple variants), pick the winner, then run the
+larger statistically-drawn sample with **only** that prompt. The stage is
+checkpointed (`record_id`-keyed JSONL) so a crash never re-bills completed
+records, enforces `max_records`/`max_spend_usd`, and writes measured token/cost
+figures to `reports/llm_run_summary.md`.
+
 ## Design choices that matter
 
 These are filled in as the milestones land (see below). The pipeline is
@@ -62,7 +84,11 @@ This repo is built milestone by milestone (see `docs/SPEC.md` §8).
 - [x] **M3 — Themes:** config-selected clustering (BERTopic default + offline
       KMeans backend), c-TF-IDF keywords, representative examples, explicit
       outlier cluster, and a theme-prevalence-over-time table; `reports/themes.md`.
-- [ ] M4 — LLM extraction
+- [x] **M4 — LLM extraction:** schema-validated structured fields with robust
+      parsing; 3 prompt variants + offline eval harness (`reports/llm_eval.md`);
+      checkpoint/resume, bounded concurrency, retry+backoff, `max_records`/
+      `max_spend_usd` caps, pre-run cost estimate, measured token/cost accounting
+      (`reports/llm_run_summary.md`); fully offline via `--dry-run`.
 - [ ] M5 — Predictive model
 - [ ] M6 — Statistics
 - [ ] M7 — Report

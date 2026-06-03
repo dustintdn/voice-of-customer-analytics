@@ -83,10 +83,12 @@ class EmbedConfig(BaseModel):
     # ``model_name`` would otherwise collide with pydantic's ``model_`` namespace.
     model_config = ConfigDict(protected_namespaces=())
 
+    backend: Literal["sentence_transformers", "hashing"] = "sentence_transformers"
     model_name: str
     batch_size: int = 64
     normalize: bool = True
     cache: bool = True
+    hashing_dim: int = 256
 
 
 class ThemesConfig(BaseModel):

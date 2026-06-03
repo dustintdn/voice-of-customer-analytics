@@ -40,10 +40,12 @@ ingest:
   drop_null_outcome: false       # keep rows with null outcome (handled in M5)
 
 embed:
+  backend: sentence_transformers  # sentence_transformers (real) | hashing (offline, no deps/network)
   model_name: sentence-transformers/all-mpnet-base-v2
   batch_size: 64
   normalize: true
   cache: true
+  hashing_dim: 256                # vector dim for the offline hashing backend
 
 themes:
   algorithm: bertopic            # bertopic | hdbscan_ctfidf

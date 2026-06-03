@@ -98,7 +98,10 @@ This repo is built milestone by milestone (see `docs/SPEC.md` §8).
       Benjamini-Hochberg correction, emergence/fading detection; findings carry
       estimate + CI + test stat + corrected p-value + plain-language reading
       (`reports/statistics.md`). Primitives unit-tested against textbook values.
-- [ ] M7 — Report
+- [x] **M7 — Report:** auto-generated executive `reports/voc_insight_report.md`
+      (optional `.html`) — leads with the "so what", CI on every number,
+      significant movers, what predicts the outcome, methodology + caveats, and
+      charts (prevalence-over-time with CI bands, sentiment, feature importance).
 - [ ] M8 — Polish (real result numbers land here)
 
 ## Repository layout

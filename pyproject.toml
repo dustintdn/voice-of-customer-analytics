@@ -67,3 +67,7 @@ ignore = ["E501"]  # line length handled by formatter
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
+filterwarnings = [
+    # Third-party (matplotlib/pyparsing) deprecations — not from our code.
+    "ignore::DeprecationWarning",
+]

@@ -35,9 +35,8 @@ columns:
 ingest:
   min_tokens: 5                  # drop near-empty narratives
   lowercase_for_clustering: true # keep original casing for LLM stage; normalize for clustering
-  dedup_exact: true
-  dedup_near: true
-  near_dup_threshold: 0.9        # Jaccard/minhash similarity above which we treat as dup
+  dedup_exact: true              # drop identical narratives (display text)
+  dedup_near: true               # drop near-dups: same canonical form (case/punct/whitespace)
   drop_null_outcome: false       # keep rows with null outcome (handled in M5)
 
 embed:

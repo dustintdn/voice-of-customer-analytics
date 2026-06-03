@@ -26,9 +26,9 @@ from voc.stats import run_stats
 from voc.themes import run_themes
 
 
-def _run_all(config: Config, dry_run: bool) -> None:
-    """Run every stage in order on the configured (sample) dataset."""
-    run_ingest(config)
+def _run_all(config: Config, dry_run: bool, full: bool) -> None:
+    """Run every stage in order on the configured dataset."""
+    run_ingest(config, full=full)
     run_embed(config)
     run_themes(config)
     run_extract(config, dry_run=dry_run)
@@ -55,6 +55,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Use a mock LLM (no network, no spend) for the extraction stage.",
     )
+    common.add_argument(
+        "--full",
+        action="store_true",
+        help="Ingest the full raw CSV instead of the committed sample.",
+    )
 
     parser = argparse.ArgumentParser(prog="voc", description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -70,14 +75,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     config = load_config(args.config)
 
     dispatch = {
-        "ingest": lambda: run_ingest(config),
+        "ingest": lambda: run_ingest(config, full=args.full),
         "embed": lambda: run_embed(config),
         "themes": lambda: run_themes(config),
         "extract": lambda: run_extract(config, dry_run=args.dry_run),
         "predict": lambda: run_predict(config),
         "stats": lambda: run_stats(config),
         "report": lambda: run_report(config),
-        "run": lambda: _run_all(config, dry_run=args.dry_run),
+        "run": lambda: _run_all(config, dry_run=args.dry_run, full=args.full),
     }
 
     try:

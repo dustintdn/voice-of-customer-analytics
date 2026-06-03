@@ -63,7 +63,6 @@ class IngestConfig(BaseModel):
     lowercase_for_clustering: bool = True
     dedup_exact: bool = True
     dedup_near: bool = True
-    near_dup_threshold: float = 0.9
     drop_null_outcome: bool = False
 
 

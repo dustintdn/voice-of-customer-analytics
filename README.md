@@ -93,7 +93,11 @@ This repo is built milestone by milestone (see `docs/SPEC.md` §8).
       text-derived features (PCA embeddings, theme, LLM fields, metadata) with a
       time-aware split; gradient boosting vs. logistic baseline; ROC-AUC/PR-AUC/
       Brier, confusion matrix, permutation importance (`reports/predictive_model.md`).
-- [ ] M6 — Statistics
+- [x] **M6 — Statistics:** sample-size design, Wilson/bootstrap CIs on every
+      proportion, two-proportion z-tests of change-over-time with
+      Benjamini-Hochberg correction, emergence/fading detection; findings carry
+      estimate + CI + test stat + corrected p-value + plain-language reading
+      (`reports/statistics.md`). Primitives unit-tested against textbook values.
 - [ ] M7 — Report
 - [ ] M8 — Polish (real result numbers land here)
 

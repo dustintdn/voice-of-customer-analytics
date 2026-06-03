@@ -19,6 +19,7 @@ paths:
   llm_extractions: data/processed/llm_extractions.jsonl  # append-only checkpoint
   feature_table: data/processed/features.parquet
   predict_metrics: data/processed/predict_metrics.json
+  findings: data/processed/findings.json
   reports_dir: reports
 
 # Column mapping makes the pipeline dataset-agnostic (SPEC §5.1).

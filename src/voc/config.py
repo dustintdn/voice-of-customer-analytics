@@ -41,6 +41,7 @@ class PathsConfig(BaseModel):
     llm_extractions: Path
     feature_table: Path
     predict_metrics: Path
+    findings: Path
     reports_dir: Path
 
 

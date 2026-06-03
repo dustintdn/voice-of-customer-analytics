@@ -40,6 +40,7 @@ class PathsConfig(BaseModel):
     theme_prevalence: Path
     llm_extractions: Path
     feature_table: Path
+    predict_metrics: Path
     reports_dir: Path
 
 
@@ -137,9 +138,10 @@ class PredictConfig(BaseModel):
     positive_class_is_bad: bool = True
     test_split: Literal["time", "random"] = "time"
     test_fraction: float = 0.25
-    model: Literal["lightgbm", "xgboost"] = "lightgbm"
+    model: Literal["lightgbm", "xgboost", "sklearn"] = "lightgbm"
     baseline: str = "logistic"
     threshold: float = 0.5
+    embedding_pca_components: int = 16
 
 
 class StatsConfig(BaseModel):

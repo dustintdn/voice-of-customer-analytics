@@ -164,6 +164,27 @@ _COMPANIES = [
 ]
 _STATES = ["CA", "TX", "NY", "FL", "IL", "PA", "OH", "GA", "NC", "MI"]
 
+# Escalation's effect on the outcome is category-dependent (a non-linear
+# interaction, with a sign flip for Mortgage). This gives the gradient-boosting
+# model a genuine edge over an additive logistic baseline — the relationship is
+# not captured by category + escalation main effects alone.
+_ESC_DISPUTE_EFFECT = {
+    "Credit reporting": 0.40,
+    "Debt collection": 0.35,
+    "Mortgage": -0.10,
+    "Credit card": 0.10,
+    "Checking or savings account": 0.05,
+    "Student loan": 0.20,
+}
+_ESC_TIMELY_EFFECT = {  # added to P(not timely) when escalated
+    "Credit reporting": 0.35,
+    "Debt collection": 0.30,
+    "Mortgage": 0.00,
+    "Credit card": 0.05,
+    "Checking or savings account": 0.05,
+    "Student loan": 0.20,
+}
+
 
 def _fill(template: str, rng: np.random.Generator) -> str:
     """Fill slot placeholders in a fragment with random, realistic values."""
@@ -210,10 +231,11 @@ def synthesize(columns, n: int = N_SAMPLE, seed: int = 42) -> pd.DataFrame:
         parts.append(str(rng.choice(_CLOSERS)))
         narrative = " ".join(parts)
 
-        # Learnable outcome: baseline dispute rate per category, raised by escalation.
-        dispute_prob = min(0.95, spec["dispute_rate"] + (0.25 if escalated else 0.0))
+        # Learnable outcome: per-category base rate plus a category-dependent
+        # escalation interaction (non-additive — rewards gradient boosting).
+        dispute_prob = min(0.95, max(0.02, spec["dispute_rate"] + (_ESC_DISPUTE_EFFECT[cat] if escalated else 0.0)))
         disputed = "Yes" if rng.random() < dispute_prob else "No"
-        untimely_prob = 0.10 + (0.20 if escalated else 0.0)
+        untimely_prob = min(0.90, max(0.02, 0.08 + (_ESC_TIMELY_EFFECT[cat] if escalated else 0.0)))
         timely = "No" if rng.random() < untimely_prob else "Yes"
 
         rows.append(

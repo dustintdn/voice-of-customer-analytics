@@ -56,7 +56,9 @@ This repo is built milestone by milestone (see `docs/SPEC.md` §8).
 - [x] **M1 — Ingest:** config-mapped CSV → cleaned `records.parquet` (two text
       columns, dedup, date parsing, time columns) + `reports/data_quality.md`;
       transforms unit-tested.
-- [ ] M2 — Embed + vector store
+- [x] **M2 — Embed + vector store:** injectable embedder (sentence-transformers
+      default + offline hashing backend), content-hash embedding cache, ChromaDB
+      index, and `semantic_search`.
 - [ ] M3 — Themes
 - [ ] M4 — LLM extraction
 - [ ] M5 — Predictive model

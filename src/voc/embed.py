@@ -18,7 +18,10 @@ own (network-dependent) embedding model.
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
+import logging
+import os
 import re
 from pathlib import Path
 from typing import Protocol
@@ -28,6 +31,13 @@ import pandas as pd
 
 from voc import schema
 from voc.config import Config
+
+# Disable ChromaDB telemetry before chromadb is imported (lazily, at runtime).
+# The env var + Settings(anonymized_telemetry=False) disable it semantically;
+# silencing the telemetry logger suppresses the noisy posthog-version error that
+# chromadb 0.5.x emits while building the (disabled) capture call.
+os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
+logging.getLogger("chromadb.telemetry").setLevel(logging.CRITICAL)
 
 _COLLECTION = "voc"
 _TOKEN_RE = re.compile(r"[a-z0-9]+")
@@ -74,7 +84,7 @@ class HashingEmbedder:
             tokens = _TOKEN_RE.findall(text.lower())
             for tok in tokens:
                 out[row, self._hash(tok)] += 1.0
-            for a, b in zip(tokens, tokens[1:]):
+            for a, b in zip(tokens, tokens[1:], strict=False):
                 out[row, self._hash(f"{a}_{b}")] += 1.0
         return _l2_normalize(out)
 
@@ -141,7 +151,7 @@ def _load_cache(path: Path) -> dict[str, np.ndarray]:
     if not path.exists():
         return {}
     data = np.load(path, allow_pickle=False)
-    return dict(zip(data["hashes"].tolist(), data["vectors"]))
+    return dict(zip(data["hashes"].tolist(), data["vectors"], strict=False))
 
 
 def _save_cache(path: Path, cache: dict[str, np.ndarray]) -> None:
@@ -163,7 +173,7 @@ def embed_corpus(
 
     # Encode each unique uncached text exactly once.
     missing_text_by_hash: dict[str, str] = {}
-    for h, t in zip(hashes, texts):
+    for h, t in zip(hashes, texts, strict=False):
         if h not in cache and h not in missing_text_by_hash:
             missing_text_by_hash[h] = t
 
@@ -174,7 +184,7 @@ def embed_corpus(
         )
         miss_hashes = list(missing_text_by_hash)
         new_vecs = embedder.encode([missing_text_by_hash[h] for h in miss_hashes])
-        for h, vec in zip(miss_hashes, new_vecs):
+        for h, vec in zip(miss_hashes, new_vecs, strict=False):
             cache[h] = vec
         if use_cache:
             _save_cache(cache_path, cache)
@@ -189,18 +199,21 @@ def embed_corpus(
 # --------------------------------------------------------------------------- #
 def _client(config: Config):
     import chromadb
+    from chromadb.config import Settings
 
     config.paths.vector_store_dir.mkdir(parents=True, exist_ok=True)
-    return chromadb.PersistentClient(path=str(config.paths.vector_store_dir))
+    # Disable telemetry: it attempts a network call and must stay offline.
+    return chromadb.PersistentClient(
+        path=str(config.paths.vector_store_dir),
+        settings=Settings(anonymized_telemetry=False),
+    )
 
 
 def build_index(config: Config, records: pd.DataFrame, embeddings: np.ndarray) -> None:
     """(Re)build the Chroma collection from records + their embeddings."""
     client = _client(config)
-    try:
+    with contextlib.suppress(Exception):
         client.delete_collection(_COLLECTION)  # rebuild fresh; avoids stale vectors
-    except Exception:  # noqa: BLE001 - collection may not exist yet
-        pass
     collection = client.create_collection(
         name=_COLLECTION, metadata={"hnsw:space": "cosine"}
     )
@@ -251,7 +264,7 @@ def semantic_search(
 
     results: list[dict] = []
     for rid, doc, dist, meta in zip(
-        res["ids"][0], res["documents"][0], res["distances"][0], res["metadatas"][0]
+        res["ids"][0], res["documents"][0], res["distances"][0], res["metadatas"][0], strict=False
     ):
         results.append(
             {

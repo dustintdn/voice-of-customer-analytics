@@ -6,16 +6,20 @@ VENV ?= .venv
 BIN := $(VENV)/bin
 
 .DEFAULT_GOAL := help
-.PHONY: help setup sample run report test lint format clean
+.PHONY: help setup fetch-model sample run report test lint format clean
 
 help: ## Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
 
-setup: ## Create venv (if missing) and install pinned deps + dev tooling
+setup: ## Create venv (if missing), install pinned deps, and pre-fetch the embedding model
 	@test -d $(VENV) || $(PY) -m venv $(VENV)
 	$(BIN)/python -m pip install --upgrade pip
 	$(BIN)/python -m pip install -e ".[dev]"
+	$(MAKE) fetch-model
+
+fetch-model: ## Pre-download the embedding model (one-time network access; offline thereafter)
+	$(BIN)/python scripts/fetch_model.py --config config/config.yaml
 
 sample: ## Build the small committed sample dataset (slices raw CSV if present, else synthesizes)
 	$(BIN)/python scripts/make_sample.py

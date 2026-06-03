@@ -239,7 +239,10 @@ def _calibration_points(model, x_test: pd.DataFrame, y_test: pd.Series) -> list[
         return []
     proba = model.predict_proba(x_test)[:, 1]
     prob_true, prob_pred = calibration_curve(y_test, proba, n_bins=10, strategy="quantile")
-    return [{"prob_pred": float(p), "prob_true": float(t)} for p, t in zip(prob_pred, prob_true)]
+    return [
+        {"prob_pred": float(p), "prob_true": float(t)}
+        for p, t in zip(prob_pred, prob_true, strict=False)
+    ]
 
 
 # --------------------------------------------------------------------------- #

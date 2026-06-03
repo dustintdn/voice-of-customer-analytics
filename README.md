@@ -89,7 +89,10 @@ This repo is built milestone by milestone (see `docs/SPEC.md` §8).
       checkpoint/resume, bounded concurrency, retry+backoff, `max_records`/
       `max_spend_usd` caps, pre-run cost estimate, measured token/cost accounting
       (`reports/llm_run_summary.md`); fully offline via `--dry-run`.
-- [ ] M5 — Predictive model
+- [x] **M5 — Predictive model:** forecasts a behavioral outcome from
+      text-derived features (PCA embeddings, theme, LLM fields, metadata) with a
+      time-aware split; gradient boosting vs. logistic baseline; ROC-AUC/PR-AUC/
+      Brier, confusion matrix, permutation importance (`reports/predictive_model.md`).
 - [ ] M6 — Statistics
 - [ ] M7 — Report
 - [ ] M8 — Polish (real result numbers land here)

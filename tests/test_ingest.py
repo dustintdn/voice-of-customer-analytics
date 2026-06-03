@@ -7,6 +7,7 @@ import pandas as pd
 from voc import schema
 from voc.config import load_config
 from voc.ingest import (
+    _QualityTracker,
     canonical_form,
     clean_records,
     count_tokens,
@@ -19,7 +20,6 @@ from voc.ingest import (
     make_display_text,
     normalize_whitespace,
     parse_date_series,
-    _QualityTracker,
 )
 
 

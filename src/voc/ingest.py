@@ -26,8 +26,9 @@ from voc.config import Config
 # Control characters except common whitespace (tab/newline are collapsed anyway).
 _CONTROL_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 _WHITESPACE_RE = re.compile(r"\s+")
-# Standalone runs of "x" (case-insensitive) — CFPB redaction masks like "XXXX".
-_REDACTION_RE = re.compile(r"\bx{2,}\b", re.IGNORECASE)
+# CFPB redaction masks: standalone runs of "x" ("XXXX") and masked date/number
+# groups joined by separators ("XX/XX/XXXX"). Removed wholesale for clustering.
+_REDACTION_RE = re.compile(r"\bx{2,}(?:[\s/.\-]+x{2,})*\b", re.IGNORECASE)
 # Non-alphanumeric (keep spaces) — used only to build the near-dup key.
 _NON_ALNUM_RE = re.compile(r"[^a-z0-9\s]")
 

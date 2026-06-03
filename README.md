@@ -53,7 +53,9 @@ This repo is built milestone by milestone (see `docs/SPEC.md` §8).
 
 - [x] **M0 — Scaffold:** structure, typed config loader, Makefile, sample
       script, test stub (`make test` green).
-- [ ] M1 — Ingest
+- [x] **M1 — Ingest:** config-mapped CSV → cleaned `records.parquet` (two text
+      columns, dedup, date parsing, time columns) + `reports/data_quality.md`;
+      transforms unit-tested.
 - [ ] M2 — Embed + vector store
 - [ ] M3 — Themes
 - [ ] M4 — LLM extraction

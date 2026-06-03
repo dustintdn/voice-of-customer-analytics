@@ -59,7 +59,9 @@ This repo is built milestone by milestone (see `docs/SPEC.md` §8).
 - [x] **M2 — Embed + vector store:** injectable embedder (sentence-transformers
       default + offline hashing backend), content-hash embedding cache, ChromaDB
       index, and `semantic_search`.
-- [ ] M3 — Themes
+- [x] **M3 — Themes:** config-selected clustering (BERTopic default + offline
+      KMeans backend), c-TF-IDF keywords, representative examples, explicit
+      outlier cluster, and a theme-prevalence-over-time table; `reports/themes.md`.
 - [ ] M4 — LLM extraction
 - [ ] M5 — Predictive model
 - [ ] M6 — Statistics

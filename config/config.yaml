@@ -48,7 +48,7 @@ embed:
   hashing_dim: 256                # vector dim for the offline hashing backend
 
 themes:
-  algorithm: bertopic            # bertopic | hdbscan_ctfidf
+  algorithm: bertopic            # bertopic (real) | kmeans (offline, lightweight)
   min_topic_size: 50
   nr_topics: auto                # "auto" or an int
   umap:
@@ -58,8 +58,12 @@ themes:
   hdbscan:
     min_cluster_size: 50
     min_samples: 10
+  kmeans:                        # used only by the offline 'kmeans' backend
+    n_clusters: 8
+    outlier_quantile: 0.05       # fraction of farthest-from-centroid docs marked noise (-1)
   n_representative_docs: 5
   top_n_keywords: 10
+  stopwords: english             # CountVectorizer stop-word set for c-TF-IDF
 
 llm:
   provider: anthropic            # key from env var ANTHROPIC_API_KEY

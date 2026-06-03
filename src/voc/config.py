@@ -91,16 +91,23 @@ class EmbedConfig(BaseModel):
     hashing_dim: int = 256
 
 
+class KmeansConfig(BaseModel):
+    n_clusters: int = 8
+    outlier_quantile: float = 0.05
+
+
 class ThemesConfig(BaseModel):
     """Module 3 — theme extraction parameters."""
 
-    algorithm: Literal["bertopic", "hdbscan_ctfidf"] = "bertopic"
+    algorithm: Literal["bertopic", "kmeans"] = "bertopic"
     min_topic_size: int = 50
     nr_topics: int | Literal["auto"] = "auto"
     umap: UmapConfig = Field(default_factory=UmapConfig)
     hdbscan: HdbscanConfig = Field(default_factory=HdbscanConfig)
+    kmeans: KmeansConfig = Field(default_factory=KmeansConfig)
     n_representative_docs: int = 5
     top_n_keywords: int = 10
+    stopwords: str = "english"
 
 
 class LlmConfig(BaseModel):

@@ -44,7 +44,9 @@ ml = [
     "lightgbm==4.5.0",
 ]
 # Real LLM extraction (M4); reads the API key from an env var at run time.
-llm = ["anthropic==0.39.0"]
+# httpx is pinned <0.28: anthropic 0.39.0 passes a `proxies` arg that httpx
+# removed in 0.28, which otherwise breaks client construction.
+llm = ["anthropic==0.39.0", "httpx<0.28"]
 dev = [
     "pytest==8.3.3",
     "ruff==0.6.9",

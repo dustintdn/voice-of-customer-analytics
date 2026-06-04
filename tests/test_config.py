@@ -6,8 +6,29 @@ resolve absolute, the CLI parser builds). Stage logic is tested from M1 on.
 
 from __future__ import annotations
 
-from voc.config import Config, load_config, repo_root
+import os
+
+from voc.config import Config, load_config, load_dotenv, repo_root
 from voc.pipeline import build_parser
+
+
+def test_load_dotenv_sets_without_override(tmp_path, monkeypatch) -> None:
+    env = tmp_path / ".env"
+    env.write_text(
+        "# a comment\n"
+        'export VOC_TEST_KEY="from-dotenv"\n'
+        "VOC_TEST_EXISTING=should-not-win\n"
+    )
+    monkeypatch.delenv("VOC_TEST_KEY", raising=False)
+    monkeypatch.setenv("VOC_TEST_EXISTING", "already-set")
+
+    load_dotenv(env)
+    assert os.environ["VOC_TEST_KEY"] == "from-dotenv"  # quotes + export stripped
+    assert os.environ["VOC_TEST_EXISTING"] == "already-set"  # explicit env wins
+
+
+def test_load_dotenv_missing_file_is_noop(tmp_path) -> None:
+    load_dotenv(tmp_path / "does-not-exist.env")  # must not raise
 
 
 def test_load_config_returns_typed_config() -> None:

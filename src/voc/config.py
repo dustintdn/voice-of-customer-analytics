@@ -8,6 +8,7 @@ dicts or hardcodes values.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 from typing import Literal
 
@@ -188,6 +189,30 @@ class Config(BaseModel):
 def repo_root() -> Path:
     """Return the repository root (two levels above this file: src/voc/ -> root)."""
     return Path(__file__).resolve().parents[2]
+
+
+def load_dotenv(path: str | Path | None = None) -> None:
+    """Load ``KEY=VALUE`` pairs from a ``.env`` file into the environment.
+
+    Used so secrets (e.g. ``ANTHROPIC_API_KEY``) can live in a gitignored
+    ``.env`` instead of being exported each session. Already-set environment
+    variables take precedence (an explicit ``export`` always wins), and a
+    missing file is a no-op. Lines may be blank, ``# comments``, or
+    ``export KEY=VALUE``; surrounding quotes are stripped.
+    """
+    env_path = Path(path) if path else (repo_root() / ".env")
+    if not env_path.exists():
+        return
+    for raw in env_path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line[len("export ") :]
+        key, sep, value = line.partition("=")
+        if not sep:
+            continue
+        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
 
 
 def _resolve_paths(paths: PathsConfig, root: Path) -> PathsConfig:

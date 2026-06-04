@@ -127,7 +127,7 @@ python -m voc.pipeline embed
 python -m voc.pipeline themes
 
 # 3. Real, paid LLM run (CLAUDE.md: keep the first run cheap — max_spend_usd ≈ 2)
-export ANTHROPIC_API_KEY=...
+cp .env.example .env                          # then put your key in .env (gitignored)
 python scripts/make_gold_stub.py --n 100      # then hand-label data/sample/gold_stub.csv -> gold.csv
 python -m voc.pipeline evaluate               # pick the best prompt (only place you pay per-variant)
 python -m voc.pipeline extract --yes          # winning prompt on the statistically-sized sample

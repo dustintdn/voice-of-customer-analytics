@@ -227,16 +227,21 @@ class AnthropicLLMClient:
         if self._client is None:
             import os
 
+            from voc.config import load_dotenv
+
+            load_dotenv()  # pick up ANTHROPIC_API_KEY from a .env file if present
             try:
                 import anthropic
             except ImportError as exc:  # pragma: no cover - optional dep
                 raise PermanentLLMError(
-                    "anthropic is not installed; run `make setup` or use --dry-run."
+                    "anthropic is not installed; install the LLM extra "
+                    '(`pip install -e ".[llm]"`) or use --dry-run.'
                 ) from exc
             key = os.environ.get(self._api_key_env)
             if not key:
                 raise PermanentLLMError(
-                    f"{self._api_key_env} is not set. Export your API key or use --dry-run."
+                    f"{self._api_key_env} is not set. Add it to a .env file "
+                    "(see .env.example), export it, or use --dry-run."
                 )
             self._client = anthropic.Anthropic(api_key=key)
         return self._client

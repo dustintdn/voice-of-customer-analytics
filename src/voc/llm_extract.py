@@ -29,6 +29,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from statistics import mean, median
+from typing import Protocol
 
 import pandas as pd
 from pydantic import BaseModel, field_validator
@@ -138,6 +139,14 @@ class LLMResponse:
     output_tokens: int
 
 
+class LLMClient(Protocol):
+    """Protocol shared by the mock and real LLM clients."""
+
+    def complete(self, system: str, user: str, *, variant: str | None = None) -> LLMResponse:
+        """Return a completion for the given system/user prompt."""
+        ...
+
+
 class RetryableLLMError(Exception):
     """Transient error (rate limit / 5xx) — safe to retry with backoff."""
 
@@ -197,6 +206,7 @@ class MockLLMClient:
         }
 
     def complete(self, system: str, user: str, *, variant: str | None = None) -> LLMResponse:
+        """Return a deterministic mock completion for the record in ``user``."""
         narrative = user.rsplit("RECORD:", 1)[-1].strip()
         payload = json.dumps(self._classify(narrative, variant))
         # Approximate token usage by characters/4 (mock has no real tokenizer).
@@ -232,6 +242,7 @@ class AnthropicLLMClient:
         return self._client
 
     def complete(self, system: str, user: str, *, variant: str | None = None) -> LLMResponse:
+        """Call the Anthropic API; map transient errors to RetryableLLMError."""
         client = self._ensure_client()
         import anthropic
 
@@ -254,7 +265,7 @@ class AnthropicLLMClient:
         return LLMResponse(text=text, input_tokens=msg.usage.input_tokens, output_tokens=msg.usage.output_tokens)
 
 
-def get_llm_client(config: Config, dry_run: bool):
+def get_llm_client(config: Config, dry_run: bool) -> LLMClient:
     """Construct the mock (dry-run) or real Anthropic client."""
     if dry_run:
         return MockLLMClient(config.llm.controlled_vocab)
@@ -295,7 +306,7 @@ def _backoff_seconds(attempt: int, base: float, cap: float) -> float:
 # Per-record extraction                                                       #
 # --------------------------------------------------------------------------- #
 def extract_one(
-    client,
+    client: LLMClient,
     system: str,
     template: str,
     record_id: object,
@@ -406,7 +417,7 @@ def _confirm_run(n: int, est: float, dry_run: bool, yes: bool) -> bool:
 
 
 def run_batch(
-    client,
+    client: LLMClient,
     todo: pd.DataFrame,
     config: Config,
     checkpoint_path: Path,
@@ -551,7 +562,7 @@ _CATEGORICAL_FIELDS = ("sentiment_label", "issue_category", "severity", "is_acti
 
 
 def evaluate_variant(
-    client, gold: pd.DataFrame, version: str, config: Config
+    client: LLMClient, gold: pd.DataFrame, version: str, config: Config
 ) -> dict:
     """Run one prompt variant over the gold set; return per-field metrics."""
     system, template = load_prompt(version)

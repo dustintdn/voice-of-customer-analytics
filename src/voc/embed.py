@@ -52,7 +52,9 @@ class Embedder(Protocol):
 
     tag: str  # stable identity used in the cache key (changing it invalidates cache)
 
-    def encode(self, texts: list[str]) -> np.ndarray: ...
+    def encode(self, texts: list[str]) -> np.ndarray:
+        """Encode texts into an (n, dim) float32 matrix."""
+        ...
 
 
 def _l2_normalize(matrix: np.ndarray) -> np.ndarray:
@@ -79,6 +81,7 @@ class HashingEmbedder:
         return int.from_bytes(digest, "little") % self.dim
 
     def encode(self, texts: list[str]) -> np.ndarray:
+        """Encode texts into an L2-normalized (n, dim) float32 matrix."""
         out = np.zeros((len(texts), self.dim), dtype=np.float32)
         for row, text in enumerate(texts):
             tokens = _TOKEN_RE.findall(text.lower())
@@ -112,6 +115,7 @@ class SentenceTransformerEmbedder:
         return self._model
 
     def encode(self, texts: list[str]) -> np.ndarray:
+        """Encode texts with the sentence-transformers model into a float32 matrix."""
         model = self._ensure_model()
         vecs = model.encode(
             texts,

@@ -69,12 +69,16 @@ class IngestConfig(BaseModel):
 
 
 class UmapConfig(BaseModel):
+    """UMAP dimensionality-reduction parameters for the BERTopic backend."""
+
     n_neighbors: int = 15
     n_components: int = 5
     min_dist: float = 0.0
 
 
 class HdbscanConfig(BaseModel):
+    """HDBSCAN clustering parameters for the BERTopic backend."""
+
     min_cluster_size: int = 50
     min_samples: int = 10
 
@@ -94,6 +98,8 @@ class EmbedConfig(BaseModel):
 
 
 class KmeansConfig(BaseModel):
+    """Parameters for the offline KMeans theme-clustering backend."""
+
     n_clusters: int = 8
     outlier_quantile: float = 0.05
 

@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install (core + dev only — offline backends, no heavy/compiled deps)
+        run: pip install -e ".[dev]"
+
+      - name: Lint
+        run: ruff check src tests scripts
+
+      - name: Test (offline, no network)
+        run: pytest
+
+      - name: Smoke-test the full pipeline offline
+        run: |
+          python scripts/make_sample.py
+          python -m voc.pipeline run --config config/config.offline.yaml --dry-run
+          test -f reports/voc_insight_report.md

@@ -155,18 +155,34 @@ def time_split(dates: pd.Series, test_fraction: float) -> tuple[np.ndarray, np.n
 # Models                                                                      #
 # --------------------------------------------------------------------------- #
 def _make_gb(config: Config):
-    """Construct the configured gradient-boosting classifier."""
+    """Construct the configured gradient-boosting classifier.
+
+    Falls back from a missing/unloadable optional booster to a clear, actionable
+    error (the offline ``sklearn`` backend has no system dependencies).
+    """
     model = config.predict.model
     if model == "lightgbm":
-        from lightgbm import LGBMClassifier
-
+        try:
+            from lightgbm import LGBMClassifier
+        except (ImportError, OSError) as exc:
+            raise RuntimeError(
+                "LightGBM is unavailable. Install the ML extra (`pip install -e \".[ml]\"`); "
+                "on macOS it also needs OpenMP (`brew install libomp`), on Debian/Ubuntu "
+                "`apt-get install libgomp1`. Or set `predict.model: sklearn` for a "
+                "dependency-free gradient booster."
+            ) from exc
         return LGBMClassifier(
             n_estimators=300, learning_rate=0.05, class_weight="balanced",
             random_state=config.project.seed, verbose=-1,
         )
     if model == "xgboost":
-        from xgboost import XGBClassifier
-
+        try:
+            from xgboost import XGBClassifier
+        except (ImportError, OSError) as exc:
+            raise RuntimeError(
+                "XGBoost is unavailable. `pip install xgboost`, or set "
+                "`predict.model: sklearn` for a dependency-free gradient booster."
+            ) from exc
         return XGBClassifier(
             n_estimators=300, learning_rate=0.05, eval_metric="logloss",
             random_state=config.project.seed,

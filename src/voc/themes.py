@@ -63,9 +63,15 @@ def _cluster_bertopic(
     embeddings: np.ndarray, docs: list[str], config: Config
 ) -> tuple[np.ndarray, np.ndarray]:
     """Real BERTopic clustering on precomputed embeddings (lazy-imported)."""
-    from bertopic import BERTopic
-    from hdbscan import HDBSCAN
-    from umap import UMAP
+    try:
+        from bertopic import BERTopic
+        from hdbscan import HDBSCAN
+        from umap import UMAP
+    except ImportError as exc:
+        raise RuntimeError(
+            "BERTopic backend requires the ML extra (`pip install -e \".[ml]\"`). "
+            "Or set `themes.algorithm: kmeans` for the dependency-free offline backend."
+        ) from exc
 
     t = config.themes
     umap_model = UMAP(

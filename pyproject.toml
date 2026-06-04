@@ -11,42 +11,49 @@ requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Dustin" }]
 
-# Pinned for reproducibility. Heavy ML/LLM deps are pulled by `make setup`
-# at their respective milestones; M0 only needs the core + dev tooling.
+# The CORE dependencies are pure/manylinux wheels with no system libraries and
+# no network at run time — they install reproducibly on any platform and are all
+# the *offline* backends (hashing embedder, KMeans themes, sklearn gradient
+# boosting, mock LLM) need. The heavy / platform-fragile / network-dependent
+# pieces are opt-in extras: `ml` (real embeddings + topic models + boosters) and
+# `llm` (Anthropic API). Install what you need:
+#   pip install -e ".[dev]"            # light, offline-capable, reproducible
+#   pip install -e ".[dev,ml,llm]"     # full real backends (heavy)
 dependencies = [
-    # --- core data ---
     "pandas==2.2.3",
     "numpy==1.26.4",
     "pyarrow==16.1.0",
     "pyyaml==6.0.3",
     "pydantic==2.9.2",
     "pydantic-settings==2.5.2",
-    "tqdm==4.66.5",
-    # --- NLP / embeddings (M2, M3) ---
+    "scipy==1.13.1",
+    "scikit-learn==1.5.2",
+    "chromadb==0.5.5",
+    "matplotlib==3.9.2",
+]
+
+[project.optional-dependencies]
+# Real NLP backends (M2 embeddings, M3 BERTopic) + gradient boosters (M5).
+# Heavy and partly compiled (torch, numba/llvmlite, OpenMP); see README for
+# system prerequisites (e.g. libomp on macOS for LightGBM).
+ml = [
     "sentence-transformers==3.0.1",
     "bertopic==0.16.3",
     "umap-learn==0.5.6",
     "hdbscan==0.8.38.post2",
-    "chromadb==0.5.5",
-    # --- LLM (M4) ---
-    "anthropic==0.39.0",
-    # --- ML (M5) ---
-    "scikit-learn==1.5.2",
     "lightgbm==4.5.0",
-    # --- stats (M6) ---
-    "scipy==1.13.1",
-    "statsmodels==0.14.2",
-    # --- viz / report (M7) ---
-    "matplotlib==3.9.2",
-    "plotly==5.24.1",
 ]
-
-[project.optional-dependencies]
+# Real LLM extraction (M4); reads the API key from an env var at run time.
+llm = ["anthropic==0.39.0"]
 dev = [
     "pytest==8.3.3",
     "ruff==0.6.9",
 ]
 shap = ["shap==0.46.0"]
+# Convenience: everything.
+all = [
+    "voc-intelligence-pipeline[ml,llm,dev]",
+]
 
 [project.scripts]
 voc = "voc.pipeline:main"

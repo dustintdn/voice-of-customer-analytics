@@ -109,7 +109,8 @@ class SentenceTransformerEmbedder:
             except ImportError as exc:  # pragma: no cover - depends on optional heavy dep
                 raise ImportError(
                     "sentence-transformers is required for the 'sentence_transformers' "
-                    "embed backend. Install it (make setup) or set embed.backend: hashing."
+                    'embed backend. Install the ML extra (`pip install -e ".[ml]"`) or set '
+                    "embed.backend: hashing for the offline backend."
                 ) from exc
             self._model = SentenceTransformer(self.model_name)
         return self._model
@@ -191,6 +192,11 @@ def embed_corpus(
         for h, vec in zip(miss_hashes, new_vecs, strict=False):
             cache[h] = vec
         if use_cache:
+            # Drop stale entries from a prior embedder with a different output dim
+            # (different model → different tag → different hashes → they'd never be
+            # retrieved, but mixing dims in the same dict breaks np.stack on save).
+            expected_dim = new_vecs.shape[1]
+            cache = {h: v for h, v in cache.items() if v.shape[0] == expected_dim}
             _save_cache(cache_path, cache)
     else:
         print(f"[embed] All {len(texts):,} embeddings served from cache")

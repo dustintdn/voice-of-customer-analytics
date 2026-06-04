@@ -1,5 +1,7 @@
 # Voice-of-Customer (VoC) Intelligence Pipeline
 
+[![CI](https://github.com/dustintdn/voice-of-customer-analytics/actions/workflows/ci.yml/badge.svg)](https://github.com/dustintdn/voice-of-customer-analytics/actions/workflows/ci.yml)
+
 > **Business question:** Across hundreds of thousands of unstructured customer
 > complaints, *what are people actually upset about, is it getting better or
 > worse, and what predicts an unhappy outcome* — with enough statistical rigor
@@ -32,14 +34,27 @@ raw CSV → 1. Ingest → 2. Embed → 3. Themes → 4. LLM extract →┬→ 5.
 
 ## Quickstart
 
+**Fully offline (recommended for a quick look — core deps only, no network, no GPU/compiled libs):**
+
 ```bash
-make setup      # venv + pinned deps + pre-fetch the embedding model (one-time network)
-make sample     # build the committed sample (synthesizes a CFPB-shaped set if no raw CSV)
-make run        # full pipeline end-to-end; LLM mocked (--dry-run). Report -> reports/
-make test       # offline test suite (no network)
+make setup-core   # venv + light core deps (pandas/sklearn/chromadb/...) — pure wheels, installs anywhere
+make sample       # build the committed sample (synthesizes a CFPB-shaped set if no raw CSV)
+make run-offline  # full pipeline with offline backends; report -> reports/
+make test         # offline test suite (no network)
+```
+
+**Real backends (heavier — sentence-transformers, BERTopic, LightGBM):**
+
+```bash
+make setup        # core + ml + llm extras + pre-fetch the embedding model (one-time network; ~1GB)
+make sample
+make run          # full pipeline with real backends; LLM still mocked (--dry-run)
 ```
 
 The report lands at **`reports/voc_insight_report.md`** (charts in `reports/figures/`).
+Install tiers: `pip install -e ".[dev]"` (light/offline) · `".[dev,ml,llm]"` (full). The
+offline backends need only the core deps; requesting a real backend without its extra
+fails with a clear message telling you what to install.
 
 **Two backends for every heavy stage** (`config/config.yaml`):
 

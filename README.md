@@ -62,7 +62,7 @@ fails with a clear message telling you what to install.
 |---|---|---|
 | Embed | `sentence-transformers` (`all-mpnet-base-v2`) | `hashing` feature embedder |
 | Themes | `bertopic` | `kmeans` (scikit-learn) |
-| Predict | `lightgbm` | `sklearn` HistGradientBoosting |
+| Predict | `sklearn` HistGradientBoosting (default) | same (`lightgbm`/`xgboost` opt-in) |
 | LLM | Anthropic API | `--dry-run` deterministic mock |
 
 `make run` uses the real backends (so `make setup` installs them and caches the

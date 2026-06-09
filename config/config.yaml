@@ -32,6 +32,7 @@ columns:
   outcome_column: "Consumer disputed?"      # primary predictive target candidate
   timely_column: "Timely response?"         # alternative target (better populated)
   id_column: "Complaint ID"
+  company_column: "Company"      # stripped from clustering text (see ingest.strip_company)
   group_columns: ["Company", "State"]
 
 ingest:
@@ -39,6 +40,7 @@ ingest:
   lowercase_for_clustering: true # keep original casing for LLM stage; normalize for clustering
   dedup_exact: true              # drop identical narratives (display text)
   dedup_near: true               # drop near-dups: same canonical form (case/punct/whitespace)
+  strip_company: true            # remove the named company from clustering text -> issue-focused themes
   drop_null_outcome: false       # keep rows with null outcome (handled in M5)
 
 embed:
@@ -51,14 +53,14 @@ embed:
 
 themes:
   algorithm: bertopic            # bertopic (real) | kmeans (offline, lightweight)
-  min_topic_size: 50
+  min_topic_size: 15
   nr_topics: auto                # "auto" or an int
   umap:
-    n_neighbors: 15
+    n_neighbors: 10
     n_components: 5
     min_dist: 0.0
   hdbscan:
-    min_cluster_size: 50
+    min_cluster_size: 15
     min_samples: 10
   kmeans:                        # used only by the offline 'kmeans' backend
     n_clusters: 8
@@ -76,23 +78,22 @@ llm:
   temperature: 0.0
   # --- cost & safety controls (SPEC §5.4.1) ---
   max_concurrency: 8
-  max_records: 3000              # bulk sample size (overridden by sampling calc at M6)
-  max_spend_usd: 2.0             # hard stop; first real run stays small (CLAUDE.md)
+  max_records: 2000              # LLM sample size (> the ~1,068 the M6 calc needs for ±3%)
+  max_spend_usd: 5.0             # hard stop; run halts + checkpoints if reached
   max_attempts: 5                # retries on 429/5xx
   backoff_base_seconds: 1.0
   backoff_max_seconds: 30.0
   # measured at the real run; used for the pre-run estimate (USD per 1k tokens)
   input_cost_per_1k: 0.001
   output_cost_per_1k: 0.005
-  controlled_vocab:              # issue_category controlled vocabulary
-    - billing_dispute
-    - unauthorized_activity
-    - credit_reporting_error
-    - debt_collection_harassment
-    - loan_servicing
-    - account_access
-    - fees_and_charges
-    - customer_service
+  controlled_vocab:              # issue_category vocabulary — tailored to credit-card complaints
+    - unauthorized_activity      # fraud, unauthorized charges, identity theft
+    - billing_dispute            # disputed transactions, merchant/refund disputes
+    - fees_and_charges           # interest/APR, late fees, annual fees
+    - credit_reporting_error     # inaccurate credit reporting, FCRA
+    - account_access             # closures, restrictions, frozen/locked accounts, applications
+    - rewards_and_offers         # rewards/points/bonus/promotional terms not honored
+    - customer_service           # poor service, communication, unresolved issues
     - other
 
 predict:

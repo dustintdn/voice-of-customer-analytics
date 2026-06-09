@@ -20,6 +20,7 @@ from voc.ingest import (
     make_display_text,
     normalize_whitespace,
     parse_date_series,
+    strip_company,
 )
 
 
@@ -47,6 +48,20 @@ def test_clustering_text_lowercases_and_strips_redactions() -> None:
     # CFPB-style masks (XXXX) and date masks (XX/XX/XXXX) are removed for clustering.
     assert make_clustering_text("My name is XXXX on XX/XX/XXXX") == "my name is on"
     assert make_clustering_text("Hello WORLD") == "hello world"
+
+
+def test_strip_company_removes_brand_keeps_issue_words() -> None:
+    out = strip_company("chase charged me an unauthorized fee on my card", "JPMORGAN CHASE & CO.")
+    assert "chase" not in out.split()          # brand token removed
+    assert "charged" in out and "fee" in out    # issue words kept
+    # generic finance words are kept even when part of the brand name
+    out2 = strip_company("bank of america closed my account", "BANK OF AMERICA, NATIONAL ASSOCIATION")
+    assert "america" not in out2.split()        # brand-distinctive removed
+    assert "bank" in out2 and "account" in out2  # generic + issue words kept
+
+
+def test_strip_company_handles_missing_company() -> None:
+    assert strip_company("a complaint about fees", float("nan")) == "a complaint about fees"
 
 
 def test_canonical_form_collides_case_and_punctuation_variants() -> None:

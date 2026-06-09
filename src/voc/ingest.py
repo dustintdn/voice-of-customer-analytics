@@ -62,6 +62,38 @@ def make_clustering_text(text: object) -> str:
     return normalize_whitespace(cleaned)
 
 
+# Generic finance/legal words that appear in company names but carry issue signal
+# (or none) — kept in the clustering text even when they're part of a brand name.
+_COMPANY_STOP = {
+    "bank", "of", "the", "and", "card", "credit", "financial", "services", "service",
+    "company", "co", "na", "llc", "inc", "usa", "national", "corp", "corporation",
+    "holdings", "group", "systems", "mortgage", "loans", "loan", "trust", "fund",
+}
+
+
+def _company_tokens(company: object) -> set[str]:
+    """Brand-distinctive tokens of a company name (generic finance words removed)."""
+    if company is None or (isinstance(company, float) and pd.isna(company)):
+        return set()
+    toks = re.findall(r"[a-z0-9]+", str(company).lower())
+    return {t for t in toks if len(t) >= 3 and t not in _COMPANY_STOP}
+
+
+def strip_company(text_clean: str, company: object) -> str:
+    """Remove a complaint's own company name from its clustering text.
+
+    Real complaint narratives name the company constantly, so embeddings/clusters
+    organize by brand rather than by issue. Removing the brand-distinctive tokens
+    (e.g. "chase", "amex", "synchrony") — while keeping generic words like "bank"
+    or "card" — lets themes reflect *problems*, not companies.
+    """
+    tokens = _company_tokens(company)
+    if not tokens:
+        return text_clean
+    pattern = re.compile(r"\b(?:" + "|".join(re.escape(t) for t in tokens) + r")\b")
+    return normalize_whitespace(pattern.sub(" ", text_clean))
+
+
 def canonical_form(text: object) -> str:
     """Aggressive canonical form used only as a near-duplicate key.
 
@@ -126,6 +158,13 @@ def _standardize_columns(df: pd.DataFrame, config: Config) -> pd.DataFrame:
     out[schema.RECORD_ID] = df[cols.id_column]
     out[schema.TEXT] = df[cols.text_column].map(make_display_text)
     out[schema.TEXT_CLEAN] = df[cols.text_column].map(make_clustering_text)
+    if config.ingest.strip_company and cols.company_column and cols.company_column in df.columns:
+        out[schema.TEXT_CLEAN] = [
+            strip_company(tc, comp)
+            for tc, comp in zip(
+                out[schema.TEXT_CLEAN].tolist(), df[cols.company_column].tolist(), strict=False
+            )
+        ]
     out["_raw_date"] = df[cols.date_column]
     out[schema.CATEGORY] = df[cols.category_column]
     if cols.subcategory_column and cols.subcategory_column in df.columns:

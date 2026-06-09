@@ -160,7 +160,8 @@ _CATEGORY_KEYWORDS = [
     ("credit_reporting_error", ("credit report", "bureau", "inquiry", "inaccurate", "score")),
     ("debt_collection_harassment", ("collector", "collection", "garnish", "harass", "validation")),
     ("loan_servicing", ("mortgage", "escrow", "servicer", "modification", "forbearance", "loan")),
-    ("account_access", ("frozen", "access", "closed my account", "locked", "withdrawn")),
+    ("account_access", ("frozen", "access", "closed my account", "locked", "withdrawn", "closure")),
+    ("rewards_and_offers", ("rewards", "points", "bonus", "miles", "cashback", "cash back")),
     ("fees_and_charges", ("fee", "overdraft", "charged", "charge", "interest", "apr")),
     ("billing_dispute", ("dispute", "billing", "statement")),
 ]

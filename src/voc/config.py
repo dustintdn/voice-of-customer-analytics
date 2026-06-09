@@ -56,6 +56,7 @@ class ColumnsConfig(BaseModel):
     outcome_column: str
     timely_column: str | None = None
     id_column: str
+    company_column: str | None = None  # if set, its value is stripped from clustering text
     group_columns: list[str] = Field(default_factory=list)
 
 
@@ -66,6 +67,7 @@ class IngestConfig(BaseModel):
     lowercase_for_clustering: bool = True
     dedup_exact: bool = True
     dedup_near: bool = True
+    strip_company: bool = True  # remove the named company from clustering text (issue-focused themes)
     drop_null_outcome: bool = False
 
 
